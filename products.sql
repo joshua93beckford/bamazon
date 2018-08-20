@@ -28,7 +28,7 @@ INSERT INTO products (product_name, department_name, price, stock_quantity)
 VALUES ("Cell Phone","Electronics",500.00,100);
 
 INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("TV","Electronics",6000.00,20);
+VALUES ("TV","Electronics",6000.00,2);
 
 INSERT INTO products (product_name, department_name, price, stock_quantity)
 VALUES ("Computer","Electronics",1000.00,16);
@@ -37,9 +37,9 @@ INSERT INTO products (product_name, department_name, price, stock_quantity)
 VALUES ("Tent","Outdoors",250.00,60);
 
 INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("Kyak","Outdoors",600.00,20);
+VALUES ("Kyak","Outdoors",600.00,2);
 
 INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("Cannoe","Outdoors",900.00,40);
+VALUES ("Cannoe","Outdoors",900.00,4);
 
 SELECT * FROM products;

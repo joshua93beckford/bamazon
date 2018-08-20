@@ -17,89 +17,134 @@ var connection = mysql.createConnection({
 
 connection.connect(function (err) {
     if (err) throw err;
-    showProducts();
+    manageProducts();
 });
 
-function showProducts() {
-    connection.query("SELECT * FROM products", function (err, res) {
-        if (err) throw err;
-        res.forEach(el => {
-            console.log(el.item_id + " | " + el.product_name + " | " + el.department_name + " | " + el.price + " | " + el.stock_quantity);
-        });
-        buyUnits();
-    });
-}
-
-function buyUnits() {
+function manageProducts() {
     inquirer.prompt([
         {
-            name: "productID",
-            type: "input",
-            message: "Enter The ID Of the Product You Want To Buy:",
+            name: "managerView",
+            type: "list",
+            message: "Select An Option To Perform:",
+            choices: ["View Products For Sale", "View Low Inventory", "Add To Inventory", "Add New Product", "Exit"]
 
-        },
-        {
-            name: "quantity",
-            type: "input",
-            message: "Enter The Quantity Of The Product You Want To Buy:",
         }
     ])
         .then(answers => {
-            var itemID = parseInt(answers.productID);
-            var quantity = parseInt(answers.quantity);
+            if (answers.managerView === "View Products For Sale") {
+                connection.query("SELECT * FROM products", function (err, res) {
+                    if (err) throw err;
+                    res.forEach(el => {
+                        console.log(el.item_id + " | " + el.product_name + " | " + el.department_name + " | " + el.price + " | " + el.stock_quantity);
 
-            connection.query("SELECT * FROM products WHERE item_id=?", [itemID], function (err, res) {
-                if (err) throw err;
+                    });
+                    manageProducts();
+                });
 
-                if (quantity > res[0].stock_quantity) {
-                    console.log("Insufficient Quantity Please Shop Again");
-                    keepShopping();
-                }
-                else {
-                    var newQuantity = res[0].stock_quantity - quantity;
-                    var totalCost = res[0].price * newQuantity;
-                    var productName = res[0].product_name;
+            }
+            else if (answers.managerView === "View Low Inventory") {
+
+                connection.query("SELECT * FROM products", function (err, res) {
+                    var trigger = false;
+                    if (err) throw err;
+                    res.forEach(el => {
+                        if (parseInt(el.stock_quantity) < 5) {
+                            console.log(el.item_id + " | " + el.product_name + " | " + el.department_name + " | " + el.price + " | " + el.stock_quantity);
+                            trigger = true;
+                        }
+                    });
+                    if (!trigger) {
+                        console.log("No Items Has Low Inventory");
+                    }
+                    manageProducts();
+                });
+
+            }
+            else if (answers.managerView === "Add To Inventory") {
+                inquirer.prompt([
+                    {
+                        name: "productID",
+                        type: "input",
+                        message: "Enter ID Of Product From Inventory:",
+                    },
+                    {
+                        name: "quantity",
+                        type: "input",
+                        message: "Enter Quantity Of Product To Add To Inventory:",
+                    }
+                ]).then(ans => {
+
+                    var itemID = ans.productID;
+                    connection.query("SELECT * FROM products WHERE item_id=?", [itemID], function (err, res) {
+
+                        if (err) throw err;
+                        var quantity = parseInt(res[0].stock_quantity);
+                        var quan = parseInt(ans.quantity);
+                        var newQuantity = parseInt(quan + quantity);
+                        var productName = res[0].product_name;
+                        var query = connection.query(
+                            "UPDATE products SET ? WHERE ?",
+                            [
+                                {
+                                    stock_quantity: newQuantity
+                                },
+                                {
+                                    item_id: itemID
+                                }
+                            ],
+                            function (err, res) {
+                                console.log(quan + " Of " + productName + " Got Stored In The Inventory")
+                                manageProducts();
+                            });
+                    });
+                });
+            }
+            else if (answers.managerView === "Add New Product") {
+                inquirer.prompt([
+                    {
+                        name: "product",
+                        type: "input",
+                        message: "Enter Product To Add To Inventory:",
+                    },
+                    {
+                        name: "department",
+                        type: "input",
+                        message: "Enter Department Of Product:",
+                    },
+                    {
+                        name: "price",
+                        type: "input",
+                        message: "Enter Price Of Product:",
+                    },
+                    {
+                        name: "stock",
+                        type: "input",
+                        message: "Enter Stock Count Of Product:",
+                    }
+                ]).then(ans => {
+
                     var query = connection.query(
-                        "UPDATE products SET ? WHERE ?",
-                        [
-                            {
-                                stock_quantity: newQuantity
-                            },
-                            {
-                                item_id: itemID
-                            }
-                        ],
+                        "INSERT INTO products SET ?",
+                        {
+                            product_name: ans.product,
+                            department_name: ans.department,
+                            price: ans.price,
+                            stock_quantity: ans.stock
+                        },
                         function (err, res) {
                             if (err) throw err;
-                            console.log("You bought " + quantity + " units of " + productName + "." + " The subtotal is: $" + totalCost);
-                            keepShopping();
 
+                            console.log("Product Added!");
+                            manageProducts();
                         }
                     );
-                }
+                });
+            }
+            else {
+                connection.end();
+            }
 
-            });
         });
 
 }
 
-function keepShopping() {
-
-    inquirer.prompt([
-        {
-            name: "keepShop",
-            type: "input",
-            message: "Do You Want To Keep Shopping (yes) / (no) ?",
-
-        }
-    ]).then(answers => {
-        if (answers.keepShop === "no") {
-            connection.end();
-
-        }
-        else {
-            showProducts();
-        }
-    });
-
-}

@@ -57,7 +57,7 @@ function buyUnits() {
                 }
                 else {
                     var newQuantity = res[0].stock_quantity - quantity;
-                    var totalCost = res[0].price * newQuantity;
+                    var totalCost = res[0].price * quantity;
                     var productName = res[0].product_name;
                     var query = connection.query(
                         "UPDATE products SET ? WHERE ?",
